@@ -1,0 +1,92 @@
+{
+  "name": "o-sebe",
+  "private": false,
+  "version": "1.0.0",
+  "description": "О себе — бесплатный генератор резюме для Windows. PDF, 6 шаблонов, офлайн. | Free resume/CV builder.",
+  "author": "Спиркин В.А. (ThodProd)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ThodProd/o-sebe.git"
+  },
+  "homepage": "https://github.com/ThodProd/o-sebe#readme",
+  "bugs": {
+    "url": "https://github.com/ThodProd/o-sebe/issues"
+  },
+  "keywords": [
+    "resume",
+    "resume-builder",
+    "cv",
+    "cv-generator",
+    "резюме",
+    "генератор-резюме",
+    "pdf",
+    "electron",
+    "react",
+    "typescript",
+    "windows",
+    "russian",
+    "open-source",
+    "job-search",
+    "career"
+  ],
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "cross-env ELECTRON_DEV=1 electron .",
+    "dist": "vite build && electron-builder --win"
+  },
+  "dependencies": {
+    "clsx": "2.1.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.17.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-dropzone": "^15.0.0",
+    "react-hook-form": "^7.77.0",
+    "tailwind-merge": "3.4.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.1.17",
+    "@types/node": "22.19.17",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "5.1.1",
+    "cross-env": "^7.0.3",
+    "electron": "^35.1.5",
+    "electron-builder": "^26.0.12",
+    "tailwindcss": "4.1.17",
+    "typescript": "5.9.3",
+    "vite": "7.3.2",
+    "vite-plugin-singlefile": "2.3.0"
+  },
+  "build": {
+    "appId": "com.ospirkin.osebe",
+    "productName": "О себе",
+    "icon": "ICON.ico",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "ICON.ico"
+    ],
+    "win": {
+      "icon": "ICON.ico",
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}

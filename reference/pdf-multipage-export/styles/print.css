@@ -1,0 +1,81 @@
+/* Фрагмент из src/index.css — стили многостраничного PDF */
+
+.resume-break-unit {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.resume-break-line {
+  line-height: inherit;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.resume-document-content > *:first-child {
+  min-height: 1123px;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html, body, #root {
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .print-hidden {
+    display: none !important;
+  }
+
+  .resume-preview-area,
+  .resume-preview-zoom,
+  #resume-preview,
+  .resume-document,
+  .resume-document-content {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .resume-preview-area {
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .resume-preview-zoom {
+    transform: none !important;
+  }
+
+  #resume-preview,
+  .resume-document {
+    background: transparent !important;
+    width: 794px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    position: static !important;
+  }
+
+  .resume-document-content > *:first-child {
+    min-height: 0 !important;
+  }
+
+  .resume-break-unit,
+  .resume-break-line,
+  .resume-end-section {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #resume-preview * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

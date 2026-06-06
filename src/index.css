@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.resume-break-unit {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.resume-break-line {
+  line-height: inherit;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.resume-document-content > *:first-child {
+  min-height: 1123px;
+}
+
+/* Перед printToPDF: снять ограничение высоты окна и дать контенту растянуться на все листы */
+.pdf-export-prep,
+.pdf-export-prep html,
+.pdf-export-prep body,
+.pdf-export-prep #root {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.pdf-export-prep .flex.h-screen,
+.pdf-export-prep .resume-preview-area,
+.pdf-export-prep .resume-preview-zoom,
+.pdf-export-prep #resume-preview,
+.pdf-export-prep .resume-document,
+.pdf-export-prep .resume-document-content {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.pdf-export-prep .print-hidden {
+  display: none !important;
+}
+
+.pdf-export-prep .resume-preview-area {
+  padding: 0 !important;
+  background: white !important;
+}
+
+.pdf-export-prep .resume-preview-zoom {
+  transform: none !important;
+}
+
+.pdf-export-prep #resume-preview,
+.pdf-export-prep .resume-document {
+  width: 794px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  position: static !important;
+}
+
+.pdf-export-prep .resume-document-content > *:first-child {
+  min-height: 0 !important;
+}
+
+.pdf-export-prep .resume-document-content {
+  padding-bottom: 64px;
+}
+
+.resume-continuation-fill {
+  display: flex;
+}
+
+/* Печать / PDF — один поток контента, разрывы через CSS */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html, body, #root {
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .print-hidden {
+    display: none !important;
+  }
+
+  .resume-preview-area,
+  .resume-preview-zoom,
+  #resume-preview,
+  .resume-document,
+  .resume-document-content {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .resume-preview-area {
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .resume-preview-zoom {
+    transform: none !important;
+  }
+
+  #resume-preview,
+  .resume-document {
+    background: transparent !important;
+    width: 794px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    position: static !important;
+  }
+
+  .resume-document-content > *:first-child {
+    min-height: 0 !important;
+  }
+
+  .resume-break-unit,
+  .resume-break-line {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .resume-page-footer {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #resume-preview * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

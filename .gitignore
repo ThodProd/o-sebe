@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Electron builder output (exe goes to GitHub Releases, not git)
+release/win-unpacked/
+release/*.exe
+release/*.7z
+release/*.blockmap
+release/builder-debug.yml
+release/builder-effective-config.yaml
+
+# IDE / OS
+.cursor/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.*
