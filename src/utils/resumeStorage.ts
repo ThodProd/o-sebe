@@ -13,6 +13,43 @@ const CONFIG_VERSION = 1 as const;
 
 const TEMPLATE_TYPES: TemplateType[] = ['classic', 'modern', 'minimal', 'dark', 'elegant', 'white'];
 
+const LEGACY_EDUCATION_MAP: Record<string, string> = {
+  'Неполное высшее': 'Незаконченное высшее',
+  'Среднее': 'Среднее общее (11 классов)',
+};
+
+const LEGACY_SCHEDULE_MAP: Record<string, string> = {
+  'Гибкий': 'Гибкий график',
+  'Удалённо': 'Удалённая работа',
+  'Свободный': 'Свободный график',
+};
+
+function normalizePersonalDetails(raw: Partial<ResumeData['personalDetails']> | undefined) {
+  const defaults = createDefaultResumeData().personalDetails;
+  const merged = { ...defaults, ...raw };
+
+  if (merged.education && LEGACY_EDUCATION_MAP[merged.education]) {
+    merged.education = LEGACY_EDUCATION_MAP[merged.education];
+  }
+
+  if (!merged.militaryFitnessCategory) {
+    merged.militaryFitnessCategory = 'Не выбрано';
+  }
+
+  return merged;
+}
+
+function normalizeMain(raw: Partial<ResumeData['main']> | undefined) {
+  const defaults = createDefaultResumeData().main;
+  const merged = { ...defaults, ...raw };
+
+  if (merged.schedule && LEGACY_SCHEDULE_MAP[merged.schedule]) {
+    merged.schedule = LEGACY_SCHEDULE_MAP[merged.schedule];
+  }
+
+  return merged;
+}
+
 export const createDefaultResumeData = (): ResumeData => ({
   personal: {
     firstName: 'Имя',
@@ -38,10 +75,14 @@ export const createDefaultResumeData = (): ResumeData => ({
   personalDetails: {
     citizenship: 'Российская Федерация',
     education: 'Высшее (бакалавр)',
+    educationHigherCount: '',
     birthDate: '01.01.1995',
     gender: 'Не указан',
     maritalStatus: 'Не указан',
     militaryService: 'Не служил',
+    militaryFitnessCategory: 'Не выбрано',
+    militaryUnfitArticle: '',
+    militaryUnfitPoint: '',
     medicalBook: 'Нет',
     drivingLicense: 'Нет',
   },
@@ -65,14 +106,16 @@ export function normalizeResumeData(raw: Partial<ResumeData> | undefined): Resum
   return {
     personal: { ...defaults.personal, ...raw?.personal },
     customContacts: Array.isArray(raw?.customContacts) ? raw.customContacts : [],
-    main: { ...defaults.main, ...raw?.main },
-    personalDetails: { ...defaults.personalDetails, ...raw?.personalDetails },
+    main: normalizeMain(raw?.main),
+    personalDetails: normalizePersonalDetails(raw?.personalDetails),
     languages: Array.isArray(raw?.languages) ? raw.languages : [],
     workExperience: Array.isArray(raw?.workExperience)
       ? raw.workExperience.map((item) => ({
           id: item.id ?? Date.now().toString(),
+          entryTitle: item.entryTitle ?? '',
           company: item.company ?? '',
           position: item.position ?? '',
+          rank: item.rank ?? '',
           startDate: item.startDate ?? '',
           endDate: item.endDate ?? '',
           isCurrent: Boolean(item.isCurrent),
@@ -83,6 +126,7 @@ export function normalizeResumeData(raw: Partial<ResumeData> | undefined): Resum
     education: Array.isArray(raw?.education)
       ? raw.education.map((item) => ({
           id: item.id ?? Date.now().toString(),
+          entryTitle: item.entryTitle ?? '',
           institution: item.institution ?? '',
           level: item.level ?? 'Не указан',
           city: item.city ?? '',
@@ -93,10 +137,25 @@ export function normalizeResumeData(raw: Partial<ResumeData> | undefined): Resum
           graduationYear: item.graduationYear ?? '',
           studyForm: item.studyForm ?? 'Очная',
           additionalInfo: item.additionalInfo ?? '',
+          documentInfo: item.documentInfo ?? '',
+          professionalActivityRights: item.professionalActivityRights ?? '',
           showStudyDuration: Boolean(item.showStudyDuration),
         }))
       : [],
-    courses: Array.isArray(raw?.courses) ? raw.courses : [],
+    courses: Array.isArray(raw?.courses)
+      ? raw.courses.map((item) => ({
+          id: item.id ?? Date.now().toString(),
+          entryTitle: item.entryTitle ?? '',
+          name: item.name ?? '',
+          institution: item.institution ?? '',
+          graduationYear: item.graduationYear ?? '',
+          duration: item.duration ?? '',
+          qualification: item.qualification ?? '',
+          professionalActivityRights:
+            item.professionalActivityRights ?? item.positionRights ?? '',
+          documentInfo: item.documentInfo ?? '',
+        }))
+      : [],
     skills: Array.isArray(raw?.skills) ? raw.skills : [],
     additional: {
       ...defaults.additional,

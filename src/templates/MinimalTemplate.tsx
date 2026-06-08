@@ -1,11 +1,13 @@
 import React from 'react';
 import { ResumeData } from '../types/resume';
 import MultilineText from '../components/MultilineText';
+import StructuredEducationBlock from '../components/StructuredEducationBlock';
+import StructuredCourseBlock from '../components/StructuredCourseBlock';
 import CustomContactsList from '../components/CustomContactsList';
 import {
   calculateTenure,
-  formatEducationInstitution,
-  formatEducationPeriod,
+  formatPersonalEducation,
+  formatMilitaryService,
   formatWorkPeriod,
   hasText,
 } from '../utils/resumeFormat';
@@ -18,6 +20,13 @@ interface Props {
 const MinimalTemplate: React.FC<Props> = ({ data, accentColor }) => {
   const { personal, customContacts, main, personalDetails, languages, workExperience, education, courses, skills, additional } = data;
   const fullName = `${personal.lastName} ${personal.firstName} ${personal.middleName}`.trim();
+  const educationSummary = formatPersonalEducation(personalDetails.education, personalDetails.educationHigherCount);
+  const militarySummary = formatMilitaryService(
+    personalDetails.militaryService,
+    personalDetails.militaryFitnessCategory,
+    personalDetails.militaryUnfitArticle,
+    personalDetails.militaryUnfitPoint
+  );
 
   return (
     <div className="bg-white w-full flex flex-1 flex-col min-h-full p-8 text-gray-800" style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px' }}>
@@ -59,14 +68,16 @@ const MinimalTemplate: React.FC<Props> = ({ data, accentColor }) => {
             <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: accentColor }}>Личная информация</h3>
             <div className="space-y-0.5">
               <p><span className="text-gray-500">Гражданство:</span> {personalDetails.citizenship}</p>
-              <p><span className="text-gray-500">Образование:</span> {personalDetails.education}</p>
+              <p><span className="text-gray-500">Образование:</span> {educationSummary}</p>
               <p><span className="text-gray-500">Дата рождения:</span> {personalDetails.birthDate}</p>
               <p><span className="text-gray-500">Пол:</span> {personalDetails.gender}</p>
               {hasText(personalDetails.maritalStatus) && personalDetails.maritalStatus !== 'Не указан' && (
                 <p><span className="text-gray-500">Семейное положение:</span> {personalDetails.maritalStatus}</p>
               )}
               {personalDetails.drivingLicense !== 'Нет' && <p><span className="text-gray-500">Права:</span> {personalDetails.drivingLicense}</p>}
-              {personalDetails.militaryService !== 'Не служил' && <p><span className="text-gray-500">Армия:</span> {personalDetails.militaryService}</p>}
+              {militarySummary && militarySummary !== 'Не служил' && (
+                <p><span className="text-gray-500">Армия:</span> {militarySummary}</p>
+              )}
             </div>
           </div>
 
@@ -120,6 +131,7 @@ const MinimalTemplate: React.FC<Props> = ({ data, accentColor }) => {
                         {period && <span className="text-[10px] text-gray-500">{period}</span>}
                       </div>
                       <p className="font-semibold mb-1" style={{ color: accentColor }}>{work.position}</p>
+                      {hasText(work.rank) && <p className="text-[10px] text-gray-600 mb-1">Звание: {work.rank}</p>}
                       {tenure && <p className="text-[10px] text-gray-500 mb-1">Стаж: {tenure}</p>}
                     </div>
                     {hasText(work.responsibilities) && (
@@ -143,20 +155,14 @@ const MinimalTemplate: React.FC<Props> = ({ data, accentColor }) => {
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: accentColor }}>ОБРАЗОВАНИЕ</h3>
             <div className="space-y-3">
-              {education.map((edu) => {
-                const studyPeriod = formatEducationPeriod(edu.startDate, edu.endDate, edu.showStudyDuration);
-
-                return (
-                  <div key={edu.id} className="resume-break-unit">
-                    <p className="font-bold">{formatEducationInstitution(edu.institution, edu.level)}</p>
-                    {hasText(edu.city) && <p className="text-[10px] text-gray-500">Город: {edu.city}</p>}
-                    {studyPeriod && <p className="text-[10px] text-gray-500">Период обучения: {studyPeriod}</p>}
-                    {edu.faculty && <p>{edu.faculty}</p>}
-                    {edu.speciality && <p className="text-gray-500">{edu.speciality}</p>}
-                    {hasText(edu.additionalInfo) && <p className="text-gray-500 italic">{edu.additionalInfo}</p>}
-                  </div>
-                );
-              })}
+              {education.map((edu, index) => (
+                <StructuredEducationBlock
+                  key={edu.id}
+                  edu={edu}
+                  className="resume-break-unit"
+                  showDivider={index < education.length - 1}
+                />
+              ))}
             </div>
           </div>
 
@@ -164,11 +170,13 @@ const MinimalTemplate: React.FC<Props> = ({ data, accentColor }) => {
             <div>
               <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: accentColor }}>КУРСЫ И СЕРТИФИКАТЫ</h3>
               <div className="space-y-2">
-                {courses.map((course) => (
-                  <div key={course.id} className="resume-break-unit">
-                    <p className="font-bold">{course.name}</p>
-                    <p className="text-gray-500">{course.institution}{course.graduationYear ? ` · ${course.graduationYear}` : ''}</p>
-                  </div>
+                {courses.map((course, index) => (
+                  <StructuredCourseBlock
+                    key={course.id}
+                    course={course}
+                    className="resume-break-unit"
+                    showDivider={index < courses.length - 1}
+                  />
                 ))}
               </div>
             </div>

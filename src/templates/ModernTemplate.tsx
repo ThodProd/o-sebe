@@ -2,11 +2,13 @@ import React from 'react';
 import { ResumeData } from '../types/resume';
 import { Phone, Mail, MapPin, Globe, Send } from 'lucide-react';
 import MultilineText from '../components/MultilineText';
+import StructuredEducationBlock from '../components/StructuredEducationBlock';
+import StructuredCourseBlock from '../components/StructuredCourseBlock';
 import CustomContactsList from '../components/CustomContactsList';
 import {
   calculateTenure,
-  formatEducationInstitution,
-  formatEducationPeriod,
+  formatPersonalEducation,
+  formatMilitaryService,
   formatWorkPeriod,
   hasText,
 } from '../utils/resumeFormat';
@@ -19,6 +21,13 @@ interface Props {
 const ModernTemplate: React.FC<Props> = ({ data, accentColor }) => {
   const { personal, customContacts, main, personalDetails, languages, workExperience, education, courses, skills, additional } = data;
   const fullName = `${personal.lastName} ${personal.firstName} ${personal.middleName}`.trim();
+  const educationSummary = formatPersonalEducation(personalDetails.education, personalDetails.educationHigherCount);
+  const militarySummary = formatMilitaryService(
+    personalDetails.militaryService,
+    personalDetails.militaryFitnessCategory,
+    personalDetails.militaryUnfitArticle,
+    personalDetails.militaryUnfitPoint
+  );
 
   const sidebarBg = accentColor;
 
@@ -112,13 +121,15 @@ const ModernTemplate: React.FC<Props> = ({ data, accentColor }) => {
           <div className="h-0.5 mb-2" style={{ background: accentColor }} />
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
             <p><span className="font-semibold">Гражданство:</span> {personalDetails.citizenship}</p>
-            <p><span className="font-semibold">Образование:</span> {personalDetails.education}</p>
+            <p><span className="font-semibold">Образование:</span> {educationSummary}</p>
             <p><span className="font-semibold">Дата рождения:</span> {personalDetails.birthDate}</p>
             <p><span className="font-semibold">Пол:</span> {personalDetails.gender}</p>
             {hasText(personalDetails.maritalStatus) && personalDetails.maritalStatus !== 'Не указан' && (
               <p><span className="font-semibold">Семейное положение:</span> {personalDetails.maritalStatus}</p>
             )}
-            {personalDetails.militaryService && <p><span className="font-semibold">Служба в армии:</span> {personalDetails.militaryService}</p>}
+            {militarySummary && militarySummary !== 'Не служил' && (
+              <p><span className="font-semibold">Служба в армии:</span> {militarySummary}</p>
+            )}
             {personalDetails.drivingLicense && <p><span className="font-semibold">Права:</span> {personalDetails.drivingLicense}</p>}
           </div>
         </div>
@@ -143,6 +154,7 @@ const ModernTemplate: React.FC<Props> = ({ data, accentColor }) => {
                     )}
                   </div>
                   <p className="font-semibold" style={{ color: accentColor }}>{work.position}</p>
+                  {hasText(work.rank) && <p className="text-[10px] text-gray-600">Звание: {work.rank}</p>}
                   {tenure && <p className="text-[9px] text-gray-500 mt-0.5">Стаж: {tenure}</p>}
                 </div>
                 {hasText(work.responsibilities) && (
@@ -166,21 +178,15 @@ const ModernTemplate: React.FC<Props> = ({ data, accentColor }) => {
         <div className="mb-5">
           <h2 className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: accentColor }}>ОБРАЗОВАНИЕ</h2>
           <div className="h-0.5 mb-2" style={{ background: accentColor }} />
-          {education.map((edu) => {
-            const studyPeriod = formatEducationPeriod(edu.startDate, edu.endDate, edu.showStudyDuration);
-
-            return (
-              <div key={edu.id} className="resume-break-unit mb-3 pl-3 border-l-2" style={{ borderColor: accentColor }}>
-                <p className="font-bold">{formatEducationInstitution(edu.institution, edu.level)}</p>
-                {hasText(edu.city) && <p className="text-[9px] text-gray-500">Город: {edu.city}</p>}
-                {studyPeriod && <p className="text-[9px] text-gray-500">Период обучения: {studyPeriod}</p>}
-                {edu.faculty && <p>{edu.faculty}</p>}
-                {edu.speciality && <p className="text-gray-600">{edu.speciality}</p>}
-                {edu.studyForm && <p className="text-gray-500 text-[10px]">{edu.studyForm}</p>}
-                {hasText(edu.additionalInfo) && <p className="text-gray-500 text-[10px] italic">{edu.additionalInfo}</p>}
-              </div>
-            );
-          })}
+          {education.map((edu, index) => (
+            <div key={edu.id} className="resume-break-unit mb-3 pl-3 border-l-2" style={{ borderColor: accentColor }}>
+              <StructuredEducationBlock
+                edu={edu}
+                className="mb-0"
+                showDivider={index < education.length - 1}
+              />
+            </div>
+          ))}
         </div>
 
         {/* Courses */}
@@ -188,13 +194,13 @@ const ModernTemplate: React.FC<Props> = ({ data, accentColor }) => {
           <div className="mb-5">
             <h2 className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: accentColor }}>КУРСЫ И ТРЕНИНГИ</h2>
             <div className="h-0.5 mb-2" style={{ background: accentColor }} />
-            {courses.map((course) => (
+            {courses.map((course, index) => (
               <div key={course.id} className="resume-break-unit mb-2 pl-3 border-l-2" style={{ borderColor: accentColor }}>
-                <p className="font-bold">{course.name}</p>
-                {course.institution && <p>{course.institution}</p>}
-                {(course.graduationYear || course.duration) && (
-                  <p className="text-gray-500 text-[10px]">{course.graduationYear}{course.duration ? ` · ${course.duration}` : ''}</p>
-                )}
+                <StructuredCourseBlock
+                  course={course}
+                  className="mb-0"
+                  showDivider={index < courses.length - 1}
+                />
               </div>
             ))}
           </div>

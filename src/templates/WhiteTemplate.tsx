@@ -1,11 +1,13 @@
 import React from 'react';
 import { ResumeData } from '../types/resume';
 import MultilineText from '../components/MultilineText';
+import StructuredEducationBlock from '../components/StructuredEducationBlock';
+import StructuredCourseBlock from '../components/StructuredCourseBlock';
 import CustomContactsList from '../components/CustomContactsList';
 import {
   calculateTenure,
-  formatEducationInstitution,
-  formatEducationPeriod,
+  formatPersonalEducation,
+  formatMilitaryService,
   formatWorkPeriod,
   hasText,
 } from '../utils/resumeFormat';
@@ -25,6 +27,13 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const WhiteTemplate: React.FC<Props> = ({ data }) => {
   const { personal, customContacts, main, personalDetails, languages, workExperience, education, courses, skills, additional } = data;
   const fullName = `${personal.lastName} ${personal.firstName} ${personal.middleName}`.trim();
+  const educationSummary = formatPersonalEducation(personalDetails.education, personalDetails.educationHigherCount);
+  const militarySummary = formatMilitaryService(
+    personalDetails.militaryService,
+    personalDetails.militaryFitnessCategory,
+    personalDetails.militaryUnfitArticle,
+    personalDetails.militaryUnfitPoint
+  );
 
   return (
     <div
@@ -76,7 +85,7 @@ const WhiteTemplate: React.FC<Props> = ({ data }) => {
             <SectionTitle>Личная информация</SectionTitle>
             <div className="space-y-1 text-[10px]">
               <p><span className="text-black/50">Гражданство:</span> {personalDetails.citizenship}</p>
-              <p><span className="text-black/50">Образование:</span> {personalDetails.education}</p>
+              <p><span className="text-black/50">Образование:</span> {educationSummary}</p>
               <p><span className="text-black/50">Дата рождения:</span> {personalDetails.birthDate}</p>
               <p><span className="text-black/50">Пол:</span> {personalDetails.gender}</p>
               {hasText(personalDetails.maritalStatus) && personalDetails.maritalStatus !== 'Не указан' && (
@@ -85,8 +94,8 @@ const WhiteTemplate: React.FC<Props> = ({ data }) => {
               {personalDetails.drivingLicense !== 'Нет' && (
                 <p><span className="text-black/50">Права:</span> {personalDetails.drivingLicense}</p>
               )}
-              {personalDetails.militaryService !== 'Не служил' && (
-                <p><span className="text-black/50">Армия:</span> {personalDetails.militaryService}</p>
+              {militarySummary && militarySummary !== 'Не служил' && (
+                <p><span className="text-black/50">Армия:</span> {militarySummary}</p>
               )}
               {personalDetails.medicalBook !== 'Нет' && (
                 <p><span className="text-black/50">Мед. книжка:</span> {personalDetails.medicalBook}</p>
@@ -160,6 +169,7 @@ const WhiteTemplate: React.FC<Props> = ({ data }) => {
                           {period && <span className="text-[9px] text-black/50 flex-shrink-0">{period}</span>}
                         </div>
                         <p className="font-semibold text-[11px] mb-1">{work.position}</p>
+                        {hasText(work.rank) && <p className="text-[10px] text-black/70 mb-1">Звание: {work.rank}</p>}
                         {tenure && <p className="text-[9px] text-black/50 mb-1">Стаж: {tenure}</p>}
                       </div>
                       {hasText(work.responsibilities) && (
@@ -185,21 +195,16 @@ const WhiteTemplate: React.FC<Props> = ({ data }) => {
             <div>
               <SectionTitle>Образование</SectionTitle>
               <div className="space-y-3">
-                {education.map((edu) => {
-                  const studyPeriod = formatEducationPeriod(edu.startDate, edu.endDate, edu.showStudyDuration);
-
-                  return (
-                    <div key={edu.id} className="resume-break-unit pb-3 border-b border-black/15 last:border-0 last:pb-0">
-                      <p className="font-bold">{formatEducationInstitution(edu.institution, edu.level)}</p>
-                      {hasText(edu.city) && <p className="text-[10px] text-black/50">Город: {edu.city}</p>}
-                      {studyPeriod && <p className="text-[10px] text-black/50">Период обучения: {studyPeriod}</p>}
-                      {edu.faculty && <p className="text-[10px]">{edu.faculty}</p>}
-                      {edu.speciality && <p className="text-[10px] text-black/70">{edu.speciality}</p>}
-                      {edu.studyForm && <p className="text-[10px] text-black/50">{edu.studyForm}</p>}
-                      {hasText(edu.additionalInfo) && <p className="text-[10px] text-black/60 italic">{edu.additionalInfo}</p>}
-                    </div>
-                  );
-                })}
+                {education.map((edu, index) => (
+                  <div key={edu.id} className="resume-break-unit pb-3 last:pb-0">
+                    <StructuredEducationBlock
+                      edu={edu}
+                      className="mb-0 text-[10px]"
+                      showDivider={index < education.length - 1}
+                      dividerLineClassName="bg-black/15"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -208,15 +213,14 @@ const WhiteTemplate: React.FC<Props> = ({ data }) => {
             <div>
               <SectionTitle>Курсы и сертификаты</SectionTitle>
               <div className="space-y-2">
-                {courses.map((course) => (
-                  <div key={course.id} className="resume-break-unit">
-                    <p className="font-bold">{course.name}</p>
-                    <p className="text-[10px] text-black/60">
-                      {course.institution}
-                      {course.graduationYear ? ` · ${course.graduationYear}` : ''}
-                      {course.duration ? ` · ${course.duration}` : ''}
-                    </p>
-                  </div>
+                {courses.map((course, index) => (
+                  <StructuredCourseBlock
+                    key={course.id}
+                    course={course}
+                    className="resume-break-unit text-[10px]"
+                    showDivider={index < courses.length - 1}
+                    dividerLineClassName="bg-black/15"
+                  />
                 ))}
               </div>
             </div>

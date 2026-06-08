@@ -3,6 +3,7 @@ import { A4_PAGE_MIN_HEIGHT } from './resumePage';
 const PAGE_HEIGHT = A4_PAGE_MIN_HEIGHT;
 const BOTTOM_SAFE = 64;
 const TOP_SAFE = 48;
+const PDF_CONTENT_PADDING = 64;
 
 interface LayoutUnit {
   element: HTMLElement;
@@ -66,6 +67,103 @@ function getNextPageStart(pageIndex: number): number {
   return (pageIndex + 1) * PAGE_HEIGHT + TOP_SAFE;
 }
 
+function getLayoutPageIndex(top: number): number {
+  let pageIndex = 0;
+  while (top > getSafeLimit(pageIndex)) {
+    pageIndex += 1;
+  }
+  return pageIndex;
+}
+
+function findPrecedingSectionHeader(lineElement: HTMLElement): HTMLElement | null {
+  const container = lineElement.parentElement;
+  if (!container) return null;
+
+  const previous = container.previousElementSibling;
+  if (
+    previous instanceof HTMLElement &&
+    previous.classList.contains('resume-break-unit') &&
+    !previous.querySelector('.resume-break-line')
+  ) {
+    return previous;
+  }
+
+  return null;
+}
+
+function isFirstContentLineAfterHeader(lineElement: HTMLElement): boolean {
+  const container = lineElement.parentElement;
+  if (!container) return false;
+  return container.querySelector('.resume-break-line') === lineElement;
+}
+
+function getHeaderToMoveWithContent(
+  unit: LayoutUnit,
+  units: LayoutUnit[],
+  limitBottom: number
+): HTMLElement | null {
+  if (!unit.element.classList.contains('resume-break-line')) return null;
+  if (!isFirstContentLineAfterHeader(unit.element)) return null;
+
+  const header = findPrecedingSectionHeader(unit.element);
+  if (!header) return null;
+
+  const headerUnit = units.find((item) => item.element === header);
+  if (!headerUnit) return null;
+
+  const headerPage = getLayoutPageIndex(headerUnit.top);
+  const contentPage = getLayoutPageIndex(unit.top);
+
+  if (contentPage > headerPage) return header;
+
+  if (unit.bottom > limitBottom + 0.5 && headerUnit.bottom <= limitBottom + 0.5) {
+    return header;
+  }
+
+  return null;
+}
+
+export function measureContentExtent(contentRoot: HTMLElement): number {
+  const rootTop = contentRoot.getBoundingClientRect().top;
+  let maxBottom = 0;
+
+  contentRoot.querySelectorAll('*').forEach((node) => {
+    if (!(node instanceof HTMLElement)) return;
+
+    const style = window.getComputedStyle(node);
+    if (style.display === 'none' || style.visibility === 'hidden') return;
+
+    const rect = node.getBoundingClientRect();
+    if (rect.height <= 0) return;
+
+    maxBottom = Math.max(maxBottom, rect.bottom - rootTop);
+  });
+
+  return maxBottom || contentRoot.scrollHeight;
+}
+
+export function getPageCountForExtent(
+  extent: number,
+  paddingBottom = PDF_CONTENT_PADDING
+): number {
+  return Math.max(1, Math.ceil((extent + paddingBottom) / PAGE_HEIGHT));
+}
+
+export function getDocumentPageCount(
+  contentRoot: HTMLElement,
+  paddingBottom = PDF_CONTENT_PADDING
+): number {
+  return getPageCountForExtent(measureContentExtent(contentRoot), paddingBottom);
+}
+
+function clearDocumentMinHeight(contentRoot: HTMLElement): () => void {
+  const previous = contentRoot.style.minHeight;
+  contentRoot.style.minHeight = '';
+  return () => {
+    contentRoot.style.minHeight = previous;
+  };
+}
+
 export function applyPdfPageSpacing(contentRoot: HTMLElement): () => void {
   const cleanups: Array<() => void> = [];
 
@@ -95,6 +193,23 @@ export function applyPdfPageSpacing(contentRoot: HTMLElement): () => void {
       while (unit.top > limitBottom) {
         pageIndex += 1;
         limitBottom = getSafeLimit(pageIndex);
+      }
+
+      const headerToMove = getHeaderToMoveWithContent(unit, units, limitBottom);
+      if (headerToMove && !adjusted.has(headerToMove)) {
+        const headerUnit = units.find((item) => item.element === headerToMove);
+        if (headerUnit) {
+          const headerPageIndex = getLayoutPageIndex(headerUnit.top);
+          const targetTop = getNextPageStart(headerPageIndex);
+          const marginTop = targetTop - headerUnit.top;
+
+          if (marginTop > 1) {
+            setMarginTop(headerToMove, marginTop);
+            adjusted.add(headerToMove);
+            changed = true;
+            break;
+          }
+        }
       }
 
       if (unit.bottom > limitBottom + 0.5) {
@@ -148,7 +263,7 @@ export function applyFirstPageOnlySections(contentRoot: HTMLElement): () => void
 }
 
 export function applyDocumentPageMinHeight(contentRoot: HTMLElement): () => void {
-  const pageCount = Math.max(1, Math.ceil(contentRoot.scrollHeight / PAGE_HEIGHT));
+  const pageCount = getDocumentPageCount(contentRoot);
   const previous = contentRoot.style.minHeight;
 
   contentRoot.style.minHeight = `${pageCount * PAGE_HEIGHT}px`;
@@ -161,9 +276,8 @@ export function applyDocumentPageMinHeight(contentRoot: HTMLElement): () => void
 export function applyPdfDocumentLayout(contentRoot: HTMLElement): () => void {
   const cleanups = [
     applyFirstPageOnlySections(contentRoot),
-    applyDocumentPageMinHeight(contentRoot),
     applyPdfPageSpacing(contentRoot),
-    applyDocumentPageMinHeight(contentRoot),
+    clearDocumentMinHeight(contentRoot),
   ];
 
   return () => {

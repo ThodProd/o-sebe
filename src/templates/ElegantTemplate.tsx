@@ -1,11 +1,13 @@
 import React from 'react';
 import { ResumeData } from '../types/resume';
 import MultilineText from '../components/MultilineText';
+import StructuredEducationBlock from '../components/StructuredEducationBlock';
+import StructuredCourseBlock from '../components/StructuredCourseBlock';
 import CustomContactsList from '../components/CustomContactsList';
 import {
   calculateTenure,
-  formatEducationInstitution,
-  formatEducationPeriod,
+  formatPersonalEducation,
+  formatMilitaryService,
   formatWorkPeriod,
   hasText,
 } from '../utils/resumeFormat';
@@ -18,6 +20,13 @@ interface Props {
 const ElegantTemplate: React.FC<Props> = ({ data, accentColor }) => {
   const { personal, customContacts, main, personalDetails, languages, workExperience, education, courses, skills, additional } = data;
   const fullName = `${personal.lastName} ${personal.firstName} ${personal.middleName}`.trim();
+  const educationSummary = formatPersonalEducation(personalDetails.education, personalDetails.educationHigherCount);
+  const militarySummary = formatMilitaryService(
+    personalDetails.militaryService,
+    personalDetails.militaryFitnessCategory,
+    personalDetails.militaryUnfitArticle,
+    personalDetails.militaryUnfitPoint
+  );
 
   return (
     <div className="bg-white w-full flex flex-1 flex-col min-h-full" style={{ fontFamily: 'Georgia, serif', fontSize: '11px', color: '#2d2d2d' }}>
@@ -64,13 +73,15 @@ const ElegantTemplate: React.FC<Props> = ({ data, accentColor }) => {
             <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}` }}>Личная информация</h3>
             <div className="space-y-1 text-[10px]">
               <p><span className="text-gray-500">Гражданство:</span><br />{personalDetails.citizenship}</p>
-              <p><span className="text-gray-500">Образование:</span><br />{personalDetails.education}</p>
+              <p><span className="text-gray-500">Образование:</span><br />{educationSummary}</p>
               <p><span className="text-gray-500">Дата рождения:</span><br />{personalDetails.birthDate}</p>
               <p><span className="text-gray-500">Пол:</span><br />{personalDetails.gender}</p>
               {hasText(personalDetails.maritalStatus) && personalDetails.maritalStatus !== 'Не указан' && (
                 <p><span className="text-gray-500">Семейное положение:</span><br />{personalDetails.maritalStatus}</p>
               )}
-              {personalDetails.militaryService !== 'Не служил' && <p><span className="text-gray-500">Армия:</span><br />{personalDetails.militaryService}</p>}
+              {militarySummary && militarySummary !== 'Не служил' && (
+                <p><span className="text-gray-500">Армия:</span><br />{militarySummary}</p>
+              )}
               {personalDetails.medicalBook !== 'Нет' && <p><span className="text-gray-500">Мед. книжка:</span><br />{personalDetails.medicalBook}</p>}
               {personalDetails.drivingLicense !== 'Нет' && <p><span className="text-gray-500">Права:</span><br />{personalDetails.drivingLicense}</p>}
             </div>
@@ -134,6 +145,7 @@ const ElegantTemplate: React.FC<Props> = ({ data, accentColor }) => {
                       {period && <span className="text-[9px] text-gray-400 ml-2 flex-shrink-0">{period}</span>}
                     </div>
                     <p className="font-semibold mb-1 text-[11px] italic" style={{ color: accentColor }}>{work.position}</p>
+                    {hasText(work.rank) && <p className="text-[10px] text-gray-500 mb-1">Звание: {work.rank}</p>}
                     {tenure && <p className="text-[9px] text-gray-400 mb-1">Стаж: {tenure}</p>}
                   </div>
                   {hasText(work.responsibilities) && (
@@ -155,34 +167,29 @@ const ElegantTemplate: React.FC<Props> = ({ data, accentColor }) => {
 
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest mb-3 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}` }}>ОБРАЗОВАНИЕ</h3>
-            {education.map((edu) => {
-              const studyPeriod = formatEducationPeriod(edu.startDate, edu.endDate, edu.showStudyDuration);
-
-              return (
-                <div key={edu.id} className="resume-break-unit mb-3 relative pl-4">
-                  <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full" style={{ background: accentColor }} />
-                  <p className="font-bold">{formatEducationInstitution(edu.institution, edu.level)}</p>
-                  {hasText(edu.city) && <p className="text-[9px] text-gray-400">Город: {edu.city}</p>}
-                  {studyPeriod && <p className="text-[9px] text-gray-400">Период обучения: {studyPeriod}</p>}
-                  {edu.faculty && <p className="text-[10px]">{edu.faculty}</p>}
-                  {edu.speciality && <p className="text-[10px] text-gray-500 italic">{edu.speciality}{edu.studyForm ? ` · ${edu.studyForm}` : ''}</p>}
-                  {hasText(edu.additionalInfo) && <p className="text-[10px] text-gray-500 italic">{edu.additionalInfo}</p>}
-                </div>
-              );
-            })}
+            {education.map((edu, index) => (
+              <div key={edu.id} className="resume-break-unit mb-3 relative pl-4">
+                <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full" style={{ background: accentColor }} />
+                <StructuredEducationBlock
+                  edu={edu}
+                  className="mb-0"
+                  showDivider={index < education.length - 1}
+                />
+              </div>
+            ))}
           </div>
 
           {courses.length > 0 && (
             <div>
               <h3 className="text-[10px] font-bold uppercase tracking-widest mb-3 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}` }}>КУРСЫ И ТРЕНИНГИ</h3>
-              {courses.map((course) => (
+              {courses.map((course, index) => (
                 <div key={course.id} className="resume-break-unit mb-2 relative pl-4">
                   <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full" style={{ background: accentColor }} />
-                  <p className="font-bold">{course.name}</p>
-                  {course.institution && <p className="text-[10px] text-gray-500">{course.institution}</p>}
-                  {(course.graduationYear || course.duration) && (
-                    <p className="text-[9px] text-gray-400">{course.graduationYear}{course.duration ? ` · ${course.duration}` : ''}</p>
-                  )}
+                  <StructuredCourseBlock
+                    course={course}
+                    className="mb-0"
+                    showDivider={index < courses.length - 1}
+                  />
                 </div>
               ))}
             </div>

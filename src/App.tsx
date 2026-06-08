@@ -158,7 +158,7 @@ function App() {
     <div className="flex h-screen bg-gray-100 overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
       <div
         className={`print-hidden flex-shrink-0 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${
-          panelState === 'open' ? 'w-[360px]' : 'w-0 overflow-hidden'
+          panelState === 'open' ? 'w-[400px]' : 'w-0 overflow-hidden'
         }`}
       >
         <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-gray-100">

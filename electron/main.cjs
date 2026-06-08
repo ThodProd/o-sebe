@@ -152,6 +152,9 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, "../dist/index.html"));
   }
+
+  win.webContents.session.setSpellCheckerLanguages(["ru-RU", "ru", "en-US"]);
+  win.webContents.session.setSpellCheckerEnabled(true);
 }
 
 app.whenReady().then(() => {

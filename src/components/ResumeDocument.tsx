@@ -3,6 +3,8 @@ import { TemplateType } from '../types/resume';
 import {
   applyDocumentPageMinHeight,
   applyFirstPageOnlySections,
+  getPageCountForExtent,
+  measureContentExtent,
 } from '../utils/resumePdfLayout';
 import { A4_PAGE_MIN_HEIGHT, A4_PAGE_WIDTH } from '../utils/resumePage';
 import ResumeContinuationFill from './ResumeContinuationFill';
@@ -28,8 +30,9 @@ const ResumeDocument: React.FC<Props> = ({ children, template, accentColor, meas
     const update = () => {
       const cleanFirstPage = applyFirstPageOnlySections(element);
       const cleanMinHeight = applyDocumentPageMinHeight(element);
+      const extent = measureContentExtent(element);
 
-      setContentHeight(element.scrollHeight);
+      setContentHeight(extent);
 
       return () => {
         cleanMinHeight();
@@ -55,7 +58,7 @@ const ResumeDocument: React.FC<Props> = ({ children, template, accentColor, meas
     };
   }, [measureKey]);
 
-  const pageCount = Math.max(1, Math.ceil(contentHeight / A4_PAGE_MIN_HEIGHT));
+  const pageCount = getPageCountForExtent(contentHeight);
 
   return (
     <div

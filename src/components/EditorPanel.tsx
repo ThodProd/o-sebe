@@ -1,8 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { useResumeStore } from '../store/resumeStore';
-import { FormInput, FormTextarea, FormSelect } from './FormField';
+import { FormInput, FormTextarea, FormSelect, FormSelectWithCustom } from './FormField';
+import CollapsibleEntryCard from './CollapsibleEntryCard';
 import PhotoEditorModal from './PhotoEditorModal';
-import { calculateTenure, EDUCATION_LEVEL_OPTIONS } from '../utils/resumeFormat';
+import { calculateTenure, DOCUMENT_INFO_OPTIONS, EDUCATION_LEVEL_OPTIONS, MILITARY_FITNESS_CATEGORIES, MILITARY_SERVICE_OPTIONS, MILITARY_UNFIT_STATUS, needsMilitaryUnfitDetails, needsPersonalEducationCount, PERSONAL_EDUCATION_COUNT_OPTIONS, PERSONAL_EDUCATION_OPTIONS, WORK_SCHEDULE_OPTIONS } from '../utils/resumeFormat';
+import {
+  getCourseEntryDisplayTitle,
+  getEducationEntryDisplayTitle,
+  getWorkEntryDisplayTitle,
+} from '../utils/entryLabels';
 import { Plus, Trash2, ChevronDown, ChevronRight, Upload, X, Crop } from 'lucide-react';
 
 interface SectionProps {
@@ -72,9 +78,9 @@ const EditorPanel: React.FC = () => {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" lang="ru">
       {/* Photo */}
-      <AccordionSection title="Фото" icon="📷" defaultOpen>
+      <AccordionSection title="Фото" icon="📷">
         <div className="flex items-center gap-3 mt-2">
           {data.personal.photo ? (
             <div className="relative">
@@ -123,7 +129,7 @@ const EditorPanel: React.FC = () => {
       </AccordionSection>
 
       {/* Personal */}
-      <AccordionSection title="Личные данные" icon="👤" defaultOpen>
+      <AccordionSection title="Личные данные" icon="👤">
         <div className="grid grid-cols-2 gap-x-3 mt-2">
           <FormInput label="Фамилия" value={data.personal.lastName} onChange={(v) => store.updatePersonal('lastName', v)} placeholder="Иванов" />
           <FormInput label="Имя" value={data.personal.firstName} onChange={(v) => store.updatePersonal('firstName', v)} placeholder="Иван" />
@@ -195,7 +201,7 @@ const EditorPanel: React.FC = () => {
           <FormSelect label="Тип занятости" value={data.main.employment} onChange={(v) => store.updateMain('employment', v)}
             options={['Полная занятость', 'Частичная занятость', 'Проектная работа', 'Стажировка', 'Волонтёрство']} />
           <FormSelect label="График работы" value={data.main.schedule} onChange={(v) => store.updateMain('schedule', v)}
-            options={['5/2', '2/2', '6/1', 'Свободный', 'Удалённо', 'Гибкий']} />
+            options={[...WORK_SCHEDULE_OPTIONS]} />
           <div className="flex gap-4 mt-2">
             <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
               <input type="checkbox" checked={data.main.readyToTravel} onChange={(e) => store.updateMain('readyToTravel', e.target.checked)} className="w-4 h-4 rounded" />
@@ -213,8 +219,25 @@ const EditorPanel: React.FC = () => {
       <AccordionSection title="Личная информация" icon="🪪">
         <div className="mt-2">
           <FormInput label="Гражданство" value={data.personalDetails.citizenship} onChange={(v) => store.updatePersonalDetails('citizenship', v)} />
-          <FormSelect label="Образование" value={data.personalDetails.education} onChange={(v) => store.updatePersonalDetails('education', v)}
-            options={['Высшее (бакалавр)', 'Высшее (специалитет)', 'Высшее (магистр)', 'Неполное высшее', 'Среднее профессиональное', 'Среднее', 'Два высших']} />
+          <FormSelect
+            label="Образование"
+            value={data.personalDetails.education}
+            onChange={(v) => {
+              store.updatePersonalDetails('education', v);
+              if (!needsPersonalEducationCount(v)) {
+                store.updatePersonalDetails('educationHigherCount', '');
+              }
+            }}
+            options={[...PERSONAL_EDUCATION_OPTIONS]}
+          />
+          {needsPersonalEducationCount(data.personalDetails.education) && (
+            <FormSelect
+              label="Количество высших образований"
+              value={data.personalDetails.educationHigherCount}
+              onChange={(v) => store.updatePersonalDetails('educationHigherCount', v)}
+              options={[...PERSONAL_EDUCATION_COUNT_OPTIONS]}
+            />
+          )}
           <FormInput label="Дата рождения" value={data.personalDetails.birthDate} onChange={(v) => store.updatePersonalDetails('birthDate', v)} placeholder="01.01.2000" />
           <FormSelect label="Пол" value={data.personalDetails.gender} onChange={(v) => store.updatePersonalDetails('gender', v)}
             options={['Не указан', 'Мужской', 'Женский']} />
@@ -233,8 +256,41 @@ const EditorPanel: React.FC = () => {
               'Вдова',
               'Гражданский брак',
             ]} />
-          <FormSelect label="Служба в армии" value={data.personalDetails.militaryService} onChange={(v) => store.updatePersonalDetails('militaryService', v)}
-            options={['Не служил', 'Служил', 'Военнообязанный', 'Не подлежит призыву']} />
+          <FormSelect
+            label="Служба в армии"
+            value={data.personalDetails.militaryService}
+            onChange={(v) => {
+              store.updatePersonalDetails('militaryService', v);
+              if (v !== MILITARY_UNFIT_STATUS) {
+                store.updatePersonalDetails('militaryFitnessCategory', 'Не выбрано');
+                store.updatePersonalDetails('militaryUnfitArticle', '');
+                store.updatePersonalDetails('militaryUnfitPoint', '');
+              }
+            }}
+            options={[...MILITARY_SERVICE_OPTIONS]}
+          />
+          {needsMilitaryUnfitDetails(data.personalDetails.militaryService) && (
+            <>
+              <FormSelect
+                label="Категория годности"
+                value={data.personalDetails.militaryFitnessCategory}
+                onChange={(v) => store.updatePersonalDetails('militaryFitnessCategory', v)}
+                options={[...MILITARY_FITNESS_CATEGORIES]}
+              />
+              <FormInput
+                label="Статья расписания болезней"
+                value={data.personalDetails.militaryUnfitArticle}
+                onChange={(v) => store.updatePersonalDetails('militaryUnfitArticle', v)}
+                placeholder="51"
+              />
+              <FormInput
+                label="Пункт статьи"
+                value={data.personalDetails.militaryUnfitPoint}
+                onChange={(v) => store.updatePersonalDetails('militaryUnfitPoint', v)}
+                placeholder="«в»"
+              />
+            </>
+          )}
           <FormSelect label="Медицинская книжка" value={data.personalDetails.medicalBook} onChange={(v) => store.updatePersonalDetails('medicalBook', v)}
             options={['Нет', 'Есть, действующая', 'Есть, требует обновления']} />
           <FormInput label="Водительские права (категории)" value={data.personalDetails.drivingLicense} onChange={(v) => store.updatePersonalDetails('drivingLicense', v)} placeholder="B, C" />
@@ -268,15 +324,18 @@ const EditorPanel: React.FC = () => {
       <AccordionSection title="Опыт работы" icon="🏢">
         <div className="mt-2 space-y-4">
           {data.workExperience.map((work, idx) => (
-            <div key={work.id} className="bg-white rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-xs text-gray-700">Место работы {idx + 1}</p>
-                <button onClick={() => store.removeWorkExperience(work.id)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition">
-                  <Trash2 size={13} />
-                </button>
-              </div>
+            <CollapsibleEntryCard
+              key={work.id}
+              displayTitle={getWorkEntryDisplayTitle(work, idx)}
+              entryTitle={work.entryTitle}
+              onEntryTitleChange={(v) => store.updateWorkExperience(work.id, 'entryTitle', v)}
+              titleFieldLabel="Название места работы"
+              titleFieldPlaceholder="Например: ООО Рога и копыта — инженер"
+              onRemove={() => store.removeWorkExperience(work.id)}
+            >
               <FormInput label="Название организации" value={work.company} onChange={(v) => store.updateWorkExperience(work.id, 'company', v)} />
               <FormInput label="Должность" value={work.position} onChange={(v) => store.updateWorkExperience(work.id, 'position', v)} />
+              <FormInput label="Звание" value={work.rank} onChange={(v) => store.updateWorkExperience(work.id, 'rank', v)} placeholder="Старший инженер" />
               <div className="grid grid-cols-2 gap-x-3">
                 <FormInput label="Дата начала" value={work.startDate} onChange={(v) => store.updateWorkExperience(work.id, 'startDate', v)} placeholder="Январь 2020" />
                 {!work.isCurrent && (
@@ -307,7 +366,7 @@ const EditorPanel: React.FC = () => {
                 rows={4}
                 placeholder="Каждое достижение с новой строки"
               />
-            </div>
+            </CollapsibleEntryCard>
           ))}
           <button onClick={store.addWorkExperience} className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-800 font-medium">
             <Plus size={14} />Добавить место работы
@@ -319,21 +378,27 @@ const EditorPanel: React.FC = () => {
       <AccordionSection title="Образование" icon="🎓">
         <div className="mt-2 space-y-4">
           {data.education.map((edu, idx) => (
-            <div key={edu.id} className="bg-white rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-xs text-gray-700">Учебное заведение {idx + 1}</p>
-                <button onClick={() => store.removeEducation(edu.id)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition">
-                  <Trash2 size={13} />
-                </button>
-              </div>
+            <CollapsibleEntryCard
+              key={edu.id}
+              displayTitle={getEducationEntryDisplayTitle(edu, idx)}
+              showTitleField={false}
+              onRemove={() => store.removeEducation(edu.id)}
+            >
               <FormInput label="Название учебного заведения" value={edu.institution} onChange={(v) => store.updateEducation(edu.id, 'institution', v)} />
+              <FormSelectWithCustom
+                label="Документ / дополнительно"
+                value={edu.documentInfo}
+                onChange={(v) => store.updateEducation(edu.id, 'documentInfo', v)}
+                options={DOCUMENT_INFO_OPTIONS}
+                customPlaceholder="Например: диплом установленного образца"
+              />
+              <FormInput label="Город" value={edu.city} onChange={(v) => store.updateEducation(edu.id, 'city', v)} placeholder="г. Москва" />
               <FormSelect
                 label="Уровень образования"
                 value={edu.level}
                 onChange={(v) => store.updateEducation(edu.id, 'level', v)}
                 options={[...EDUCATION_LEVEL_OPTIONS]}
               />
-              <FormInput label="Город" value={edu.city} onChange={(v) => store.updateEducation(edu.id, 'city', v)} placeholder="г. Москва" />
               <FormInput label="Факультет" value={edu.faculty} onChange={(v) => store.updateEducation(edu.id, 'faculty', v)} />
               <FormInput label="Специальность" value={edu.speciality} onChange={(v) => store.updateEducation(edu.id, 'speciality', v)} />
               <div className="grid grid-cols-2 gap-x-3">
@@ -342,6 +407,12 @@ const EditorPanel: React.FC = () => {
               </div>
               <FormSelect label="Форма обучения" value={edu.studyForm} onChange={(v) => store.updateEducation(edu.id, 'studyForm', v)}
                 options={['Очная', 'Заочная', 'Очно-заочная', 'Дистанционная']} />
+              <FormInput
+                label="Право на проф. деятельность"
+                value={edu.professionalActivityRights}
+                onChange={(v) => store.updateEducation(edu.id, 'professionalActivityRights', v)}
+                placeholder="информационных технологий и связи"
+              />
               <FormInput
                 label="Дополнительно"
                 value={edu.additionalInfo}
@@ -357,7 +428,7 @@ const EditorPanel: React.FC = () => {
                 />
                 Показывать длительность обучения в скобках у периода
               </label>
-            </div>
+            </CollapsibleEntryCard>
           ))}
           <button onClick={store.addEducation} className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-800 font-medium">
             <Plus size={14} />Добавить образование
@@ -369,20 +440,41 @@ const EditorPanel: React.FC = () => {
       <AccordionSection title="Курсы и тренинги" icon="📚">
         <div className="mt-2 space-y-4">
           {data.courses.map((course, idx) => (
-            <div key={course.id} className="bg-white rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-xs text-gray-700">Курс {idx + 1}</p>
-                <button onClick={() => store.removeCourse(course.id)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition">
-                  <Trash2 size={13} />
-                </button>
-              </div>
+            <CollapsibleEntryCard
+              key={course.id}
+              displayTitle={getCourseEntryDisplayTitle(course, idx)}
+              entryTitle={course.entryTitle}
+              onEntryTitleChange={(v) => store.updateCourse(course.id, 'entryTitle', v)}
+              titleFieldLabel="Название курса в списке"
+              titleFieldPlaceholder="Например: Переподготовка — оценка имущества"
+              onRemove={() => store.removeCourse(course.id)}
+            >
               <FormInput label="Название курса / тренинга" value={course.name} onChange={(v) => store.updateCourse(course.id, 'name', v)} />
+              <FormSelectWithCustom
+                label="Документ / дополнительно"
+                value={course.documentInfo}
+                onChange={(v) => store.updateCourse(course.id, 'documentInfo', v)}
+                options={DOCUMENT_INFO_OPTIONS}
+                customPlaceholder="Например: диплом установленного образца"
+              />
               <FormInput label="Учебное заведение" value={course.institution} onChange={(v) => store.updateCourse(course.id, 'institution', v)} />
+              <FormInput
+                label="Квалификация"
+                value={course.qualification}
+                onChange={(v) => store.updateCourse(course.id, 'qualification', v)}
+                placeholder="Инженер по информационным технологиям"
+              />
+              <FormInput
+                label="Право на проф. деятельность"
+                value={course.professionalActivityRights}
+                onChange={(v) => store.updateCourse(course.id, 'professionalActivityRights', v)}
+                placeholder="в сфере оценки технического состояния имущества"
+              />
               <div className="grid grid-cols-2 gap-x-3">
                 <FormInput label="Год окончания" value={course.graduationYear} onChange={(v) => store.updateCourse(course.id, 'graduationYear', v)} placeholder="2023" />
                 <FormInput label="Длительность" value={course.duration} onChange={(v) => store.updateCourse(course.id, 'duration', v)} placeholder="6 месяцев" />
               </div>
-            </div>
+            </CollapsibleEntryCard>
           ))}
           <button onClick={store.addCourse} className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-800 font-medium">
             <Plus size={14} />Добавить курс
@@ -398,6 +490,8 @@ const EditorPanel: React.FC = () => {
               <input
                 value={skill.name}
                 onChange={(e) => store.updateSkill(skill.id, e.target.value)}
+                spellCheck
+                lang="ru"
                 className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
               />
               <button onClick={() => store.removeSkill(skill.id)} className="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition">
@@ -417,7 +511,7 @@ const EditorPanel: React.FC = () => {
           <FormTextarea label="О себе / Цель поиска работы" value={data.additional.aboutMe} onChange={(v) => store.updateAdditional('aboutMe', v)} rows={3} />
           <FormTextarea label="Профессиональные навыки" value={data.additional.professionalSkills} onChange={(v) => store.updateAdditional('professionalSkills', v)} rows={3} />
           <FormTextarea label="Личные качества" value={data.additional.personalQualities} onChange={(v) => store.updateAdditional('personalQualities', v)} rows={2} />
-          <FormInput label="Хобби и увлечения" value={data.additional.hobbies} onChange={(v) => store.updateAdditional('hobbies', v)} />
+          <FormTextarea label="Хобби и увлечения" value={data.additional.hobbies} onChange={(v) => store.updateAdditional('hobbies', v)} rows={2} resizable />
         </div>
       </AccordionSection>
     </div>

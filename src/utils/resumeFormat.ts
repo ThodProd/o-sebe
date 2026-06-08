@@ -120,16 +120,122 @@ export function formatWorkPeriod(startDate: string, endDate: string, isCurrent: 
   return endPart ? `${startDate} — ${endPart}` : startDate;
 }
 
-export const EDUCATION_LEVEL_OPTIONS = [
+export const WORK_SCHEDULE_OPTIONS = [
+  '5/2',
+  '2/2',
+  '6/1',
+  'Сменный график',
+  'Полный день',
+  'Свободный график',
+  'Гибкий график',
+  'Удалённая работа',
+  'Вахтовый метод',
+  'По договорённости с работодателем',
+] as const;
+
+export const PERSONAL_EDUCATION_OPTIONS = [
   'Не указан',
+  'Среднее общее (9 классов)',
+  'Среднее общее (11 классов)',
+  'Среднее профессиональное',
+  'Среднее профессиональное (колледж)',
+  'Среднее профессиональное (техникум)',
+  'Незаконченное высшее',
+  'Высшее',
   'Высшее (бакалавр)',
   'Высшее (специалитет)',
   'Высшее (магистр)',
-  'Неполное высшее',
+  'Высшее (аспирантура)',
+  'Два высших',
+  'Несколько высших',
+] as const;
+
+export const PERSONAL_EDUCATION_COUNT_OPTIONS = ['3', '4', '5'] as const;
+
+export const MILITARY_SERVICE_OPTIONS = [
+  'Не служил',
+  'Служил',
+  'Военнообязанный',
+  'Не подлежит призыву',
+  'Не годен по состоянию здоровья',
+] as const;
+
+export const MILITARY_UNFIT_STATUS = 'Не годен по состоянию здоровья';
+
+export const MILITARY_FITNESS_CATEGORIES = [
+  'Не выбрано',
+  'А — годен к военной службе',
+  'Б — годен с незначительными ограничениями',
+  'В — ограниченно годен',
+  'Г — временно не годен',
+  'Д — не годен к военной службе',
+] as const;
+
+export const EDUCATION_LEVEL_OPTIONS = [
+  'Не указан',
+  'Среднее общее (9 классов)',
+  'Среднее общее (11 классов)',
   'Среднее профессиональное',
-  'Среднее',
+  'Среднее профессиональное (колледж)',
+  'Среднее профессиональное (техникум)',
+  'Незаконченное высшее',
+  'Высшее',
+  'Высшее (бакалавр)',
+  'Высшее (специалитет)',
+  'Высшее (магистр)',
+  'Высшее (аспирантура)',
   'Два высших',
 ] as const;
+
+export const DOCUMENT_INFO_OPTIONS = [
+  'Диплом',
+  'Диплом о профессиональной переподготовке',
+  'Диплом о дополнительном образовании',
+  'Диплом о профессиональном обучении',
+  'Удостоверение о повышении квалификации',
+  'Сертификат о прохождении курса',
+  'Свидетельство о профессии рабочего',
+  'Справка об обучении',
+  'Справка о периоде обучения',
+  'Сертификат установленного образца',
+] as const;
+
+/** @deprecated use DOCUMENT_INFO_OPTIONS */
+export const COURSE_DOCUMENT_OPTIONS = DOCUMENT_INFO_OPTIONS;
+
+export const CUSTOM_OPTION_VALUE = '__custom__';
+
+export function formatEducationActivityRights(text: string): string {
+  const value = text.trim();
+  if (!value) return '';
+  return `Даёт право на профессиональную деятельность: ${value}`;
+}
+
+export function formatCourseProfessionalActivityRights(text: string): string {
+  const value = text.trim();
+  if (!value) return '';
+  return `Дает право на ведение профессиональной деятельности: ${value}`;
+}
+
+/** @deprecated use formatCourseProfessionalActivityRights */
+export function formatCoursePositionRights(text: string): string {
+  return formatCourseProfessionalActivityRights(text);
+}
+
+export function formatCourseLeadLine(
+  graduationYear: string,
+  institution: string,
+  name: string
+): string {
+  if (hasText(graduationYear) && hasText(institution)) {
+    return `${graduationYear.trim()} — ${institution.trim()}`;
+  }
+  if (hasText(institution)) return institution.trim();
+  if (hasText(graduationYear) && hasText(name)) {
+    return `${graduationYear.trim()} — ${name.trim()}`;
+  }
+  return name.trim() || institution.trim();
+}
 
 export function formatEducationInstitution(institution: string, level: string): string {
   const name = institution.trim();
@@ -161,4 +267,62 @@ export function formatEducationPeriod(
   if (!base) return tenure;
   if (!tenure) return base;
   return `${base} (${tenure})`;
+}
+
+export function needsPersonalEducationCount(education: string): boolean {
+  return education === 'Несколько высших';
+}
+
+export function needsMilitaryUnfitDetails(militaryService: string): boolean {
+  return militaryService === MILITARY_UNFIT_STATUS;
+}
+
+function pluralizeHigherEducation(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${count} высшее образование`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} высших образования`;
+  return `${count} высших образований`;
+}
+
+export function formatPersonalEducation(education: string, higherCount: string): string {
+  const value = education.trim();
+  if (!hasText(value) || value === 'Не указан') return value;
+
+  if (value === 'Несколько высших') {
+    const count = Number.parseInt(higherCount, 10);
+    if (Number.isFinite(count) && count >= 2) {
+      return pluralizeHigherEducation(count);
+    }
+    return value;
+  }
+
+  return value;
+}
+
+export function formatMilitaryService(
+  militaryService: string,
+  fitnessCategory: string,
+  unfitArticle: string,
+  unfitPoint: string
+): string {
+  const status = militaryService.trim();
+  if (!hasText(status)) return '';
+
+  if (!needsMilitaryUnfitDetails(status)) return status;
+
+  const parts: string[] = [status];
+  if (hasText(fitnessCategory) && fitnessCategory !== 'Не выбрано') {
+    parts.push(fitnessCategory);
+  }
+
+  const details: string[] = [];
+  if (hasText(unfitArticle)) details.push(`ст. ${unfitArticle.trim()}`);
+  if (hasText(unfitPoint)) details.push(`п. ${unfitPoint.trim()}`);
+
+  if (details.length > 0) {
+    parts.push(details.join(', '));
+  }
+
+  return parts.length === 1 ? parts[0] : `${parts[0]} (${parts.slice(1).join('; ')})`;
 }

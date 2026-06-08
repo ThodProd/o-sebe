@@ -29,10 +29,14 @@ export interface MainInfo {
 export interface PersonalDetails {
   citizenship: string;
   education: string;
+  educationHigherCount: string;
   birthDate: string;
   gender: string;
   maritalStatus: string;
   militaryService: string;
+  militaryFitnessCategory: string;
+  militaryUnfitArticle: string;
+  militaryUnfitPoint: string;
   medicalBook: string;
   drivingLicense: string;
 }
@@ -45,8 +49,10 @@ export interface Language {
 
 export interface WorkExperience {
   id: string;
+  entryTitle: string;
   company: string;
   position: string;
+  rank: string;
   startDate: string;
   endDate: string;
   isCurrent: boolean;
@@ -56,6 +62,7 @@ export interface WorkExperience {
 
 export interface Education {
   id: string;
+  entryTitle: string;
   institution: string;
   level: string;
   city: string;
@@ -66,15 +73,21 @@ export interface Education {
   graduationYear: string;
   studyForm: string;
   additionalInfo: string;
+  documentInfo: string;
+  professionalActivityRights: string;
   showStudyDuration: boolean;
 }
 
 export interface Course {
   id: string;
+  entryTitle: string;
   name: string;
   institution: string;
   graduationYear: string;
   duration: string;
+  qualification: string;
+  professionalActivityRights: string;
+  documentInfo: string;
 }
 
 export interface Skill {

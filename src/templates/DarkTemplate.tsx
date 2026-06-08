@@ -2,11 +2,13 @@ import React from 'react';
 import { ResumeData } from '../types/resume';
 import { Phone, Mail, MapPin, Globe, Send } from 'lucide-react';
 import MultilineText from '../components/MultilineText';
+import StructuredEducationBlock from '../components/StructuredEducationBlock';
+import StructuredCourseBlock from '../components/StructuredCourseBlock';
 import CustomContactsList from '../components/CustomContactsList';
 import {
   calculateTenure,
-  formatEducationInstitution,
-  formatEducationPeriod,
+  formatPersonalEducation,
+  formatMilitaryService,
   formatWorkPeriod,
   hasText,
 } from '../utils/resumeFormat';
@@ -19,73 +21,84 @@ interface Props {
 const DarkTemplate: React.FC<Props> = ({ data, accentColor }) => {
   const { personal, customContacts, main, personalDetails, languages, workExperience, education, courses, skills, additional } = data;
   const fullName = `${personal.lastName} ${personal.firstName} ${personal.middleName}`.trim();
+  const educationSummary = formatPersonalEducation(personalDetails.education, personalDetails.educationHigherCount);
+  const militarySummary = formatMilitaryService(
+    personalDetails.militaryService,
+    personalDetails.militaryFitnessCategory,
+    personalDetails.militaryUnfitArticle,
+    personalDetails.militaryUnfitPoint
+  );
 
   return (
-    <div className="w-full flex flex-1 min-h-full items-stretch" style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', background: '#1a1a2e', color: '#e0e0e0' }}>
-      {/* Left sidebar */}
-      <div className="w-[200px] flex-shrink-0 self-stretch p-5 flex flex-col gap-4" style={{ background: '#16213e' }}>
-        {/* Photo */}
-        <div className="flex justify-center">
-          {personal.photo ? (
-            <img src={personal.photo} alt="" className="w-[110px] h-[110px] rounded-full object-cover" style={{ border: `3px solid ${accentColor}` }} />
-          ) : (
-            <div className="w-[110px] h-[110px] rounded-full flex items-center justify-center" style={{ background: '#0f3460', border: `3px solid ${accentColor}` }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="1.5">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-              </svg>
-            </div>
-          )}
-        </div>
-
-        <div className="text-center">
-          <h1 className="text-[13px] font-bold mb-1" style={{ color: accentColor }}>{fullName}</h1>
-          <p className="text-[10px] opacity-70">{personal.position}</p>
-        </div>
-
-        <div>
-          <h3 className="text-[9px] font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}33` }}>Контакты</h3>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-[10px]"><Phone size={9} style={{ color: accentColor }} /><span>{personal.phone}</span></div>
-            <div className="flex items-center gap-2 text-[10px]"><Mail size={9} style={{ color: accentColor }} /><span className="break-all">{personal.email}</span></div>
-            <div className="flex items-center gap-2 text-[10px]"><MapPin size={9} style={{ color: accentColor }} /><span>{personal.city}</span></div>
-            {personal.website && <div className="flex items-center gap-2 text-[10px]"><Globe size={9} style={{ color: accentColor }} /><span>{personal.website}</span></div>}
-            {personal.telegram && <div className="flex items-center gap-2 text-[10px]"><Send size={9} style={{ color: accentColor }} /><span>{personal.telegram}</span></div>}
-            <CustomContactsList contacts={customContacts} variant="dark" accentColor={accentColor} />
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-[9px] font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}33` }}>Навыки</h3>
-          <div className="space-y-2">
-            {skills.map((skill) => (
-              <div key={skill.id}>
-                <p className="text-[10px] mb-0.5">{skill.name}</p>
-                <div className="h-1 rounded-full" style={{ background: '#ffffff20' }}>
-                  <div className="h-1 rounded-full" style={{ background: accentColor, width: '75%' }} />
-                </div>
+    <div
+      className="w-full flex flex-1 min-h-full items-stretch"
+      style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', background: '#1a1a2e', color: '#e0e0e0' }}
+    >
+      {/* Left sidebar — фон на всю высоту документа, контент только на 1-м листе */}
+      <div className="w-[200px] flex-shrink-0 self-stretch" style={{ background: '#16213e' }}>
+        <div className="resume-first-page-only p-5 flex flex-col gap-4">
+          <div className="flex justify-center">
+            {personal.photo ? (
+              <img src={personal.photo} alt="" className="w-[110px] h-[110px] rounded-full object-cover" style={{ border: `3px solid ${accentColor}` }} />
+            ) : (
+              <div className="w-[110px] h-[110px] rounded-full flex items-center justify-center" style={{ background: '#0f3460', border: `3px solid ${accentColor}` }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="1.5">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                </svg>
               </div>
+            )}
+          </div>
+
+          <div className="text-center">
+            <h1 className="text-[13px] font-bold mb-1" style={{ color: accentColor }}>{fullName}</h1>
+            <p className="text-[10px] opacity-70">{personal.position}</p>
+          </div>
+
+          <div>
+            <h3 className="text-[9px] font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}33` }}>Контакты</h3>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-[10px]"><Phone size={9} style={{ color: accentColor }} /><span>{personal.phone}</span></div>
+              <div className="flex items-center gap-2 text-[10px]"><Mail size={9} style={{ color: accentColor }} /><span className="break-all">{personal.email}</span></div>
+              <div className="flex items-center gap-2 text-[10px]"><MapPin size={9} style={{ color: accentColor }} /><span>{personal.city}</span></div>
+              {personal.website && <div className="flex items-center gap-2 text-[10px]"><Globe size={9} style={{ color: accentColor }} /><span>{personal.website}</span></div>}
+              {personal.telegram && <div className="flex items-center gap-2 text-[10px]"><Send size={9} style={{ color: accentColor }} /><span>{personal.telegram}</span></div>}
+              <CustomContactsList contacts={customContacts} variant="dark" accentColor={accentColor} />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-[9px] font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}33` }}>Навыки</h3>
+            <div className="space-y-2">
+              {skills.map((skill) => (
+                <div key={skill.id}>
+                  <p className="text-[10px] mb-0.5">{skill.name}</p>
+                  <div className="h-1 rounded-full" style={{ background: '#ffffff20' }}>
+                    <div className="h-1 rounded-full" style={{ background: accentColor, width: '75%' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-[9px] font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}33` }}>Языки</h3>
+            {languages.map((lang) => (
+              <p key={lang.id} className="text-[10px] mb-1">{lang.language} <span className="opacity-60 text-[9px]">({lang.level})</span></p>
             ))}
           </div>
-        </div>
 
-        <div>
-          <h3 className="text-[9px] font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}33` }}>Языки</h3>
-          {languages.map((lang) => (
-            <p key={lang.id} className="text-[10px] mb-1">{lang.language} <span className="opacity-60 text-[9px]">({lang.level})</span></p>
-          ))}
-        </div>
-
-        <div>
-          <h3 className="text-[9px] font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}33` }}>Занятость</h3>
-          <p className="text-[10px] mb-1">{main.desiredSalary}</p>
-          <p className="text-[10px] mb-1">{main.employment}</p>
-          {main.schedule && <p className="text-[10px]">{main.schedule}</p>}
+          <div>
+            <h3 className="text-[9px] font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: accentColor, borderBottom: `1px solid ${accentColor}33` }}>Занятость</h3>
+            <p className="text-[10px] mb-1">{main.desiredSalary}</p>
+            <p className="text-[10px] mb-1">{main.employment}</p>
+            {main.schedule && <p className="text-[10px]">{main.schedule}</p>}
+          </div>
         </div>
       </div>
 
       {/* Main */}
-      <div className="flex-1 p-6 space-y-5">
+      <div className="flex-1 min-h-full p-6 space-y-5" style={{ background: '#1a1a2e' }}>
         {additional.aboutMe && (
           <div className="resume-break-unit">
             <h2 className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: accentColor }}>О СЕБЕ</h2>
@@ -99,7 +112,7 @@ const DarkTemplate: React.FC<Props> = ({ data, accentColor }) => {
           <div className="h-0.5 mb-2" style={{ background: `${accentColor}50` }} />
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
             <p><span className="opacity-60">Гражданство:</span> {personalDetails.citizenship}</p>
-            <p><span className="opacity-60">Образование:</span> {personalDetails.education}</p>
+            <p><span className="opacity-60">Образование:</span> {educationSummary}</p>
             <p><span className="opacity-60">Дата рождения:</span> {personalDetails.birthDate}</p>
             <p><span className="opacity-60">Пол:</span> {personalDetails.gender}</p>
             {hasText(personalDetails.maritalStatus) && personalDetails.maritalStatus !== 'Не указан' && (
@@ -124,6 +137,7 @@ const DarkTemplate: React.FC<Props> = ({ data, accentColor }) => {
                     {period && <span className="text-[9px] opacity-60 ml-2 flex-shrink-0">{period}</span>}
                   </div>
                   <p className="font-semibold mb-1 text-[11px]" style={{ color: accentColor }}>{work.position}</p>
+                  {hasText(work.rank) && <p className="text-[10px] opacity-70 mb-1">Звание: {work.rank}</p>}
                   {tenure && <p className="text-[9px] opacity-60 mb-1">Стаж: {tenure}</p>}
                 </div>
                 {hasText(work.responsibilities) && (
@@ -146,33 +160,30 @@ const DarkTemplate: React.FC<Props> = ({ data, accentColor }) => {
         <div>
           <h2 className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: accentColor }}>ОБРАЗОВАНИЕ</h2>
           <div className="h-0.5 mb-2" style={{ background: `${accentColor}50` }} />
-          {education.map((edu) => {
-            const studyPeriod = formatEducationPeriod(edu.startDate, edu.endDate, edu.showStudyDuration);
-
-            return (
-              <div key={edu.id} className="resume-break-unit mb-3 pl-3" style={{ borderLeft: `2px solid ${accentColor}` }}>
-                <p className="font-bold">{formatEducationInstitution(edu.institution, edu.level)}</p>
-                {hasText(edu.city) && <p className="text-[9px] opacity-60">Город: {edu.city}</p>}
-                {studyPeriod && <p className="text-[9px] opacity-60">Период обучения: {studyPeriod}</p>}
-                {edu.faculty && <p className="opacity-70">{edu.faculty}</p>}
-                {edu.speciality && <p className="opacity-60 text-[10px]">{edu.speciality}{edu.studyForm ? ` · ${edu.studyForm}` : ''}</p>}
-                {hasText(edu.additionalInfo) && <p className="opacity-60 text-[10px] italic">{edu.additionalInfo}</p>}
-              </div>
-            );
-          })}
+          {education.map((edu, index) => (
+            <div key={edu.id} className="resume-break-unit mb-3 pl-3" style={{ borderLeft: `2px solid ${accentColor}` }}>
+              <StructuredEducationBlock
+                edu={edu}
+                className="mb-0 opacity-90 text-[10px]"
+                showDivider={index < education.length - 1}
+                dividerLineClassName="bg-white/15"
+              />
+            </div>
+          ))}
         </div>
 
         {courses.length > 0 && (
           <div>
             <h2 className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: accentColor }}>КУРСЫ И ТРЕНИНГИ</h2>
             <div className="h-0.5 mb-2" style={{ background: `${accentColor}50` }} />
-            {courses.map((course) => (
+            {courses.map((course, index) => (
               <div key={course.id} className="resume-break-unit mb-2 pl-3" style={{ borderLeft: `2px solid ${accentColor}` }}>
-                <p className="font-bold">{course.name}</p>
-                {course.institution && <p className="opacity-70">{course.institution}</p>}
-                {(course.graduationYear || course.duration) && (
-                  <p className="opacity-50 text-[10px]">{course.graduationYear}{course.duration ? ` · ${course.duration}` : ''}</p>
-                )}
+                <StructuredCourseBlock
+                  course={course}
+                  className="mb-0 opacity-90 text-[10px]"
+                  showDivider={index < courses.length - 1}
+                  dividerLineClassName="bg-white/15"
+                />
               </div>
             ))}
           </div>
