@@ -1,0 +1,7 @@
+{
+  "appId":"com.ospirkin.osebe",
+  "productName":"О себе",
+  "directories":{"output":"artifacts/build"},
+  "files":["dist/**/*","electron/**/*","ICON.ico"],
+  "win":{"icon":"ICON.ico","target":[{"target":"dir","arch":["x64"]}],"signAndEditExecutable":false}
+}

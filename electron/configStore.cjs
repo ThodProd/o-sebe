@@ -7,6 +7,7 @@ const CONFIG_FILE = "config.json";
 const CONFIG_VERSION = 1;
 
 function getConfigDir() {
+  if (process.env.THODHUB_DATA_DIR) return path.resolve(process.env.THODHUB_DATA_DIR);
   return path.join(app.getPath("documents"), APP_FOLDER);
 }
 

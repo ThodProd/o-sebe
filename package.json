@@ -1,7 +1,7 @@
 {
   "name": "o-sebe",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "О себе — бесплатный генератор резюме для Windows. PDF, 6 шаблонов, офлайн. | Free resume/CV builder.",
   "author": "Спиркин В.А. (ThodProd)",
   "license": "MIT",
@@ -58,7 +58,7 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.1.1",
     "cross-env": "^7.0.3",
-    "electron": "^35.1.5",
+    "electron": "45.0.0",
     "electron-builder": "^26.0.12",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3",

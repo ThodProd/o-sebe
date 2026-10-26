@@ -8,7 +8,6 @@ import CustomContactsList from '../components/CustomContactsList';
 import {
   calculateTenure,
   formatPersonalEducation,
-  formatMilitaryService,
   formatWorkPeriod,
   hasText,
 } from '../utils/resumeFormat';
@@ -22,12 +21,6 @@ const DarkTemplate: React.FC<Props> = ({ data, accentColor }) => {
   const { personal, customContacts, main, personalDetails, languages, workExperience, education, courses, skills, additional } = data;
   const fullName = `${personal.lastName} ${personal.firstName} ${personal.middleName}`.trim();
   const educationSummary = formatPersonalEducation(personalDetails.education, personalDetails.educationHigherCount);
-  const militarySummary = formatMilitaryService(
-    personalDetails.militaryService,
-    personalDetails.militaryFitnessCategory,
-    personalDetails.militaryUnfitArticle,
-    personalDetails.militaryUnfitPoint
-  );
 
   return (
     <div

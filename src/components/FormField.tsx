@@ -30,7 +30,7 @@ interface SpellMenuState {
 const fieldClassName =
   'w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition';
 
-function useSpellContextMenu(value: string, onChange: (value: string) => void) {
+function useSpellContextMenu(_value: string, onChange: (value: string) => void) {
   const [menu, setMenu] = useState<SpellMenuState | null>(null);
 
   const handleContextMenu = useCallback(

@@ -152,7 +152,7 @@ export function normalizeResumeData(raw: Partial<ResumeData> | undefined): Resum
           duration: item.duration ?? '',
           qualification: item.qualification ?? '',
           professionalActivityRights:
-            item.professionalActivityRights ?? item.positionRights ?? '',
+            item.professionalActivityRights ?? ('positionRights' in item && typeof item.positionRights === 'string' ? item.positionRights : ''),
           documentInfo: item.documentInfo ?? '',
         }))
       : [],
